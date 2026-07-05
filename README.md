@@ -1,7 +1,14 @@
-# QVMEditor
-Project I.G.I QVM editor is only one and most powerful tool for game files for IGI 1 &amp; IGI 2.</br>
+# QVMEditor [ARCHIVED]
+
+> [!WARNING]
+> **This repository is archived and no longer actively maintained.**
+>
+> Please use the new and improved C++ Qt GUI App instead for editing QVM files:
+> **👉 [project-igi-converter](https://github.com/heaven-hm/project-igi-converter) 👈**
+
+Project I.G.I QVM editor is only one and most powerful tool for game files for IGI 1 & IGI 2.
 This editor can _view/edit_ all types of _QVM_ files including complex files as well and can also detects and show information 
-about game models used in levels.</br></br>
+about game models used in levels.
 This editor can be used to write new script files _(.QSC) QSCRIPT_  as well editor has helper sections to understand how _Task Tree_ of scripts works and autocomplete shows you how to get familiar with the syntax.</br>
 Or you can _Analyze_ all the game files information using this editor to better understand how game works.
 
