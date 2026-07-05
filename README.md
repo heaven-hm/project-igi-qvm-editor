@@ -1,6 +1,10 @@
 # IMPORTANT: This repository is archived
 
-This repository has been archived. Please use the repository `@heaven-hm/project-igi-converter` instead for QVM Editor-related work.
+> [!WARNING]
+> **This repository is archived and no longer actively maintained.**
+>
+> Please use the new and improved **C++ Qt GUI App** instead for QVM Editor features:
+> **👉 [project-igi-converter](https://github.com/heaven-hm/project-igi-converter) 👈**
 
 # QVMEditor
 Project I.G.I QVM editor is only one and most powerful tool for game files for IGI 1 &amp; IGI 2.</br>
