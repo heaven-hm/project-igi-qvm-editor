@@ -70,6 +70,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppDataBootstrap.cs" />
     <Compile Include="QCompiler.cs" />
     <Compile Include="QUtils.cs" />
     <Compile Include="QVMEditorForm.cs">
