@@ -123,7 +123,14 @@ namespace QVM_Editor
             gameObjectsInfo.Add("PatrolPathCommand", "This is used to add define path commands for AI Soldiers/Cars.");
             gameObjectsInfo.Add("AmbientArea", "This is used to define an Ambient area like building where outside noise is not audible");
             gameObjectsInfo.Add("ConditionalSound", "This is used to define sound on some condition");
-            gameObjectsInfo.Add("LODSettings", "Level Of Details Settings");
+            gameObjectsInfo.Add("LODSettings", "Level-wide Level Of Detail settings, read from lod.qvm (lod.qsc)."
+                + "\nParams: splineDetail, rigidDetail, boneDetail, splineCull, rigidCull, boneCull, blend, range."
+                + "\nDetail/cull are percentages; blend is 0..1 and range is scaled by 4096."
+                + "\nThis is the fallback used for models without an authored ModelLODSettings table.");
+            gameObjectsInfo.Add("ModelLODSettings", "One authored LOD distance table for a single model, read from lod.qvm (lod.qsc)."
+                + "\nParams: Model name, Distance to LOD 1, Distance to LOD 2, Distance to LOD 3, Distance to LOD 4, Distance to cutoff."
+                + "\nDistances are in metres. The engine makes them non-decreasing and multiplies by 4096."
+                + "\nBeyond the cutoff distance the model is not drawn; see docs/LOD_QVM.md.");
             gameObjectsInfo.Add("TextureModifier", "This is used to modify textures like Grass/Snow etc for level.");
             gameObjectsInfo.Add("LevelFlow", "This is the timespan flow of current level playing.");
             gameObjectsInfo.Add("Dirlight", "This is the direct sunlight.");
