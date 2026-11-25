@@ -55,46 +55,6 @@ namespace QVM_Editor
             public float FileSize { get => fileSize; set => fileSize = value; }
         }
 
-        private static void MoveQEditorDir(string destPath)
-        {
-            var currentDirectory = Directory.GetCurrentDirectory();
-            var qEdCurrPath = currentDirectory + "\\" + "QEditor";
-            var qCompilerCurrPath = qEdCurrPath + "\\" + "QCompiler";
-            var keywordFilePath = qEdCurrPath + "\\" + keywordsFile;
-
-            try
-            {
-                if (Directory.Exists(qEdCurrPath) && Directory.Exists(qCompilerCurrPath) && !Directory.Exists(qvmEditorQEdPath))
-                {
-                    DirectoryMove(qEdCurrPath, destPath + "\\" + "QEditor");
-                }
-                if (File.Exists(keywordFilePath))
-                {
-                    QUtils.FileIOMove(keywordFilePath, qvmEditorQEdPath + "\\" + keywordsFile);
-                }
-            }
-            catch (Exception)
-            {
-                try
-                {
-                    if (Directory.Exists(qEdCurrPath) && Directory.Exists(qCompilerCurrPath) && !Directory.Exists(qvmEditorQEdPath))
-                    {
-                        DirectoryCopy(qEdCurrPath, destPath + "\\" + "QEditor", true);
-                        Directory.Delete(qEdCurrPath, true);
-                    }
-                    if (File.Exists(keywordFilePath))
-                    {
-                        QUtils.FileIOMove(keywordFilePath, qvmEditorQEdPath + "\\" + keywordsFile);
-                    }
-                }
-                catch (Exception innerEx)
-                {
-                    ShowLogException(MethodBase.GetCurrentMethod().Name, innerEx);
-                    throw;
-                }
-            }
-        }
-
         private static void InitGameObjectsInfo()
         {
             gameObjectsInfo.Add("Building", "This is used to add building to level." + "\n" + "Usage: Task_New(Task Id,Building,Position X,Y,Z,Orientation Alpha,Beta,Gamma,Model Id);");
@@ -140,41 +100,89 @@ namespace QVM_Editor
 
         internal static bool InitEditorAppData()
         {
-            bool initStatus = true;
-            string initErrReason = String.Empty;
             editorAppName = AppDomain.CurrentDomain.FriendlyName.Replace(".exe", String.Empty);
             logFile = editorAppName + ".log";
 
-            //Init Appdata paths.
-            appdataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            qvmEditorQEdPath = appdataPath + Path.DirectorySeparatorChar + qEditor;
-            qCompilerPath = qvmEditorQEdPath + @"\QCompiler";
-            objectsModelsFile = qvmEditorQEdPath + Path.DirectorySeparatorChar + "IGIModels.json";
-            tempPathFile = qvmEditorQEdPath + "\\" + tempPathFileName;
-
-            MoveQEditorDir(appdataPath);
-
-            if (!Directory.Exists(qvmEditorQEdPath)) { initErrReason = "QEditor"; initStatus = false; }
-            else if (!Directory.Exists(qCompilerPath)) { initErrReason = @"QEditor\QCompiler"; initStatus = false; }
-
-            initErrReason = "'" + initErrReason + "' Directory is missing";
-
-            //Show error if 'QEditor' path has invalid structure..
-            if (!initStatus)
+            // Resolve and repair the %APPDATA%\QEditor layout before validating it.
+            appdataPath = AppDataBootstrap.ResolveAppDataPath();
+            var sources = new List<string>
             {
-                ShowSystemFatalError("QVM Editor Appdata directory is invalid Error: (0x0000000F)\nReason: " + initErrReason + "\nPlease re-install new copy from Setup file.");
+                Path.Combine(Directory.GetCurrentDirectory(), qEditor),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, qEditor)
+            };
+            var bootstrap = AppDataBootstrap.Ensure(appdataPath, sources, qEditor, qCompiler, keywordsFile);
+
+            if (!bootstrap.Success)
+            {
+                ShowSystemFatalError(FormatAppDataError(bootstrap));
+                return false;
             }
 
-            //Init Game objects and Keywords.
+            qvmEditorQEdPath = bootstrap.Layout.EditorPath;
+            qCompilerPath = bootstrap.Layout.CompilerPath;
+            objectsModelsFile = Path.Combine(qvmEditorQEdPath, "IGIModels.json");
+            tempPathFile = Path.Combine(qvmEditorQEdPath, tempPathFileName);
+
+            // Init Game objects and Keywords.
             InitGameObjectsInfo();
             InitKeywords();
-            return initStatus;
+
+            if (bootstrap.CompilerFilesMissing)
+            {
+                ShowWarning("QCompiler files were not found at:\n" + qCompilerPath +
+                    "\n\nThe editor will start, but Compile/Decompile will not work." +
+                    "\nCopy the 'QEditor' folder from the setup archive into:\n" + qvmEditorQEdPath +
+                    "\nand restart the editor.");
+            }
+            return true;
+        }
+
+        private static string FormatAppDataError(AppDataBootstrapResult bootstrap)
+        {
+            var message = new StringBuilder();
+            message.AppendLine("QVM Editor Appdata directory is invalid Error: (0x0000000F)");
+            message.AppendLine("Reason: " + bootstrap.ErrorMessage);
+            if (!String.IsNullOrEmpty(bootstrap.ErrorPath))
+                message.AppendLine("Path: " + bootstrap.ErrorPath);
+            message.AppendLine();
+            message.AppendLine("To fix: copy the 'QEditor' folder from the setup archive into:");
+            message.AppendLine(String.IsNullOrWhiteSpace(appdataPath) ? "%APPDATA%" : appdataPath);
+            message.AppendLine("The 'QCompiler' subfolder must be present inside it (for example " +
+                Path.Combine("QEditor", "QCompiler") + ").");
+            message.AppendLine("If the folders already exist, check that your Windows account can write to them and restart the editor.");
+
+            // Keep a copy of the diagnostic: the error dialog is the only other output.
+            try
+            {
+                File.AppendAllText(Path.Combine(Directory.GetCurrentDirectory(), logFile ?? editorAppName + ".log"),
+                    "[" + DateTime.Now.ToString("yyyy-MM-dd - HH:mm:ss") + "] InitEditorAppData(): " + message + "\n");
+            }
+            catch (Exception)
+            {
+                // Logging must never hide the original error.
+            }
+            return message.ToString();
         }
 
         private static void InitKeywords()
         {
-            var keywordsList = File.ReadAllLines(qvmEditorQEdPath + "\\" + keywordsFile);
-            keywords = String.Join(" ", keywordsList);
+            string keywordPath = Path.Combine(qvmEditorQEdPath, keywordsFile);
+            if (!File.Exists(keywordPath))
+            {
+                keywords = String.Empty;
+                AddLog("InitKeywords: keywords file not found at " + keywordPath + "; autocomplete disabled.");
+                return;
+            }
+            try
+            {
+                var keywordsList = File.ReadAllLines(keywordPath);
+                keywords = String.Join(" ", keywordsList);
+            }
+            catch (Exception ex)
+            {
+                keywords = String.Empty;
+                AddLog("InitKeywords: could not read " + keywordPath + ": " + ex.Message);
+            }
         }
 
         public static DialogResult ShowDialog(string infoMsg, string caption = "INFO")
