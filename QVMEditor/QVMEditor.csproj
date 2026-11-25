@@ -85,6 +85,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Utils\HotKeyManager.cs" />
+    <Compile Include="Utils\LodQvmInfo.cs" />
     <Compile Include="Utils\SearchManager.cs" />
     <EmbeddedResource Include="QVMEditorForm.resx">
       <DependentUpon>QVMEditorForm.cs</DependentUpon>

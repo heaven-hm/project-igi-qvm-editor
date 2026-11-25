@@ -99,6 +99,13 @@ To change theme go to _Edit -> Theme -> Select your theme_
 * **Default Editor** lets you to set this _editor_ as your default editor for  _QVM files_.
 * **Multiple Themes** to select with automatic _System sync_.
 
+## Understanding `lod.qvm`
+
+`lod.qvm` is not a model file — it is a compiled QScript that stores the
+engine's per-model LOD switch distances and cull distance, plus a level-wide
+fallback. See [docs/LOD_QVM.md](docs/LOD_QVM.md) for the documented answer to
+issue #7, including what patching it can and cannot improve.
+
 # Editor Tutorial on YouTube :
 [![QEditor](https://img.youtube.com/vi/XDYC0jcDTKs/0.jpg)](https://www.youtube.com/watch?v=XDYC0jcDTKs)
 ## Version Update:

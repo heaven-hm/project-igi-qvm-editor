@@ -182,6 +182,12 @@ namespace QVM_Editor
                     }
                 }
 
+                // LOD tasks are data, not code: prefer the authored switch
+                // distances over the generic task description when available.
+                string lodInfo = LodQvmInfo.DescribeToken(objectType, scintilla.Text);
+                if (!String.IsNullOrEmpty(lodInfo))
+                    objectInfo = lodInfo;
+
                 if (!String.IsNullOrEmpty(objectInfo))
                     scintilla.CallTipShow(((Scintilla)sender).CurrentPosition, objectInfo);
             }
@@ -1324,6 +1330,15 @@ namespace QVM_Editor
 
             QUtils.AddLog($"Files path are {scriptFilePath} and name {fileNameLabel.Text}");
             scintilla.Text = QUtils.LoadFile(scriptFilePath);
+
+            // lod.qvm is a LOD task script; surface a short explanation on load
+            // instead of leaving the user to read raw QScript (issue #7).
+            if (LodQvmInfo.ContainsLodTasks(scintilla.Text))
+            {
+                string lodSummary = LodQvmInfo.DescribeDocument(scintilla.Text);
+                QUtils.AddLog(lodSummary);
+                scintilla.CallTipShow(0, lodSummary + "\nDouble-click a model name or task type for its distances.");
+            }
 
             // decompile the qvm version.
             QUtils.qvmVersion = QUtils.ReadQVMVersion(fileName);
